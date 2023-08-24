@@ -2,6 +2,8 @@ package pl.pajwoj.atipera.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.tomcat.util.json.JSONParser;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,26 +36,68 @@ public class RequestController {
 
         HttpClient client = HttpClient.newBuilder().build();
 
-        HttpRequest gitRequest = HttpRequest.newBuilder(URI.create("https://developer.github.com/v3/users/" + username))
+        HttpRequest gitRequest = HttpRequest.newBuilder(URI.create("https://api.github.com/users/" + username + "/repos"))
                 .GET()
                 .build();
 
         try {
-            System.out.println(client.send(gitRequest, HttpResponse.BodyHandlers.ofString()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            HttpResponse<String> gitResponse = client.send(gitRequest, HttpResponse.BodyHandlers.ofString());
+
+            if(gitResponse.statusCode() == 404) {
+                result.put("Message", "User not found.");
+                result.put("status", 404);
+                response.setStatus(404);
+            }
+
+            else {
+                //user exists
+                result.put("status", 200);
+                response.setStatus(200);
+
+                JSONArray responseJSON = new JSONArray(gitResponse.body());
+                JSONArray reposArray = new JSONArray();
+
+                for(int i=0; i<responseJSON.length(); i++) {
+                    JSONObject current = responseJSON.getJSONObject(i);
+                    if(current.get("fork").equals("true")) continue;
+
+                    else {
+                        JSONObject currentRepo = new JSONObject();
+
+                        currentRepo.put("name", current.get("name"));
+                        currentRepo.put("owner", current.getJSONObject("owner").get("login"));
+
+                        HttpRequest branchRequest = HttpRequest.newBuilder(URI.create("https://api.github.com/repos/" + username + "/" + current.get("name") + "/branches"))
+                                .GET()
+                                .build();
+
+                        HttpResponse<String> branchResponse = client.send(branchRequest, HttpResponse.BodyHandlers.ofString());
+                        JSONArray branchResponseJSON = new JSONArray(branchResponse.body());
+                        JSONArray branchArray = new JSONArray();
+
+                        for(int j=0; j<branchResponseJSON.length(); j++) {
+                            JSONObject branch = branchResponseJSON.getJSONObject(j);
+                            JSONObject branchInfo = new JSONObject();
+
+                            branchInfo.put("name", branch.get("name"));
+                            branchInfo.put("sha", branch.getJSONObject("commit").get("sha"));
+
+                            branchArray.put(branchInfo);
+                        }
+
+                        currentRepo.put("branches", branchArray);
+
+                        reposArray.put(currentRepo);
+                    }
+
+                }
+
+                result.put("reposArray", reposArray);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        //user does not exist
-        System.out.println();
-
-        //user exists
-        System.out.println(username);
-        result.put("Message", username);
-        result.put("status", 200);
-        response.setStatus(200);
 
         return result.toString();
     }
