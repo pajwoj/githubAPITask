@@ -21,7 +21,7 @@ When the request is correct: A JSON containing all GitHub repositories of input 
 # Example usage + result
 
 This call: 
-localhost:8080/api?username=rzashakeri
+```localhost:8080/api?username=rzashakeri```
 
 Gives this output:
 ```javascript
