@@ -17,13 +17,13 @@ import java.net.http.HttpResponse;
 @RestController
 @RequestMapping(path = "/api")
 public class RequestController {
-    @GetMapping(
-            produces = "application/json"
-    )
+    @GetMapping()
     public String generateRequest(@RequestParam String username, HttpServletRequest request, HttpServletResponse response) {
         JSONObject result = new JSONObject();
 
-        //does not really work due to "produces" annotation, still returns 406
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
         if(request.getHeader("Accept").equals("application/xml")) {
             result.put("Message", "Request does not produce XML.");
             result.put("status", 406);
@@ -44,6 +44,7 @@ public class RequestController {
                 result.put("Message", "User not found.");
                 result.put("status", 404);
                 response.setStatus(404);
+                return result.toString();
             }
 
             if(gitResponse.statusCode() == 403) {
@@ -51,6 +52,7 @@ public class RequestController {
                 result.put("Message", responseJSON.get("message"));
                 result.put("status", 403);
                 response.setStatus(403);
+                return result.toString();
             }
 
             else {
