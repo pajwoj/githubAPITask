@@ -2,7 +2,6 @@ package pl.pajwoj.atipera.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.tomcat.util.json.JSONParser;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,9 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -62,10 +59,10 @@ public class RequestController {
                     if(current.get("fork").equals("true")) continue;
 
                     else {
-                        JSONObject currentRepo = new JSONObject();
+                        JSONObject repo = new JSONObject();
 
-                        currentRepo.put("name", current.get("name"));
-                        currentRepo.put("owner", current.getJSONObject("owner").get("login"));
+                        repo.put("name", current.get("name"));
+                        repo.put("owner", current.getJSONObject("owner").get("login"));
 
                         HttpRequest branchRequest = HttpRequest.newBuilder(URI.create("https://api.github.com/repos/" + username + "/" + current.get("name") + "/branches"))
                                 .GET()
@@ -85,9 +82,9 @@ public class RequestController {
                             branchArray.put(branchInfo);
                         }
 
-                        currentRepo.put("branches", branchArray);
+                        repo.put("branches", branchArray);
 
-                        reposArray.put(currentRepo);
+                        reposArray.put(repo);
                     }
 
                 }
