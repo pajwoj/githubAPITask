@@ -89,7 +89,7 @@ public class RequestController {
 
                 }
 
-                result.put("reposArray", reposArray);
+                result.put("repos", reposArray);
             }
 
         } catch (Exception e) {
