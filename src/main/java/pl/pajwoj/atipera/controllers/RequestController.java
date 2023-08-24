@@ -46,6 +46,13 @@ public class RequestController {
                 response.setStatus(404);
             }
 
+            if(gitResponse.statusCode() == 403) {
+                JSONObject responseJSON = new JSONObject(gitResponse.body());
+                result.put("Message", responseJSON.get("message"));
+                result.put("status", 403);
+                response.setStatus(403);
+            }
+
             else {
                 //user exists
                 result.put("status", 200);
